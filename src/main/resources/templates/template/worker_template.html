@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<body>
+	<!-- 用户信息 -->
+	<div th:fragment="worker_information">
+		<div>
+			<span class="font-weight-bold">头像：</span> <img class="img-thumbnail"
+				th:src="'/image/'+${session.user.image}" width="200px"
+				height="200px" />
+		</div>
+		<div>
+			<span class="font-weight-bold"> 姓名：</span><span
+				th:text="${session.user.nickname}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">性别：</span> <span
+				th:if="${session.user.gender}">男</span> <span
+				th:if="!${session.user.gender}">女</span>
+		</div>
+		<div>
+			<span class="font-weight-bold">生日：</span> <span
+				th:text="${#strings.substring(session.user.birthday,0,10)}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">手机号码：</span> <span
+				th:text="${session.user.phone_number}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">所属科室：</span> <span th:text="${name}"></span>
+		</div>
+		<button type="button" class="btn btn-primary"
+			onclick="user_information_edit()">修改个人信息</button>
+		<script type="text/javascript">
+			var user_information_edit = function() {
+				$("#display_div").load("/user/information/edit");
+			}
+		</script>
+	</div>
+	<!-- 挂号设置 -->
+	<div th:fragment="worker_appointment_time_manage">
+		<form action="/appointment_times" method="post">
+			<div class="form-group">
+				<input type="date" class="form-control" name="time_day"
+					id="appointment_time_form_time_day_id" placeholder="挂号日期">
+			</div>
+			<div class="form-group">
+				<div class="form-check form-check-inline">挂号时间：</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="time_time"
+						value="true" checked>上午
+				</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="time_time"
+						value="false"> 下午
+				</div>
+			</div>
+			<div class="form-group">
+				<button type="button" class="btn btn-primary"
+					onclick="appointment_time_form()">新增挂号时间</button>
+			</div>
+		</form>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">日期</th>
+					<th scope="col">时间</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="appointment_time:${appointment_timeList}">
+					<td th:text="${#strings.substring(appointment_time.time_day,0,10)}"></td>
+					<td><span th:if="${appointment_time.time_time}">上午</span> <span
+						th:if="!${appointment_time.time_time}">下午</span></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript" th:inline="javascript">
+			var appointment_time_form = function() {
+				var time_day = $("#appointment_time_form_time_day_id").val()
+						.trim();
+				var time_time = $("input:radio[name=time_time]:checked").val()
+						.trim();
+				$.ajax({
+					url : "/appointment_times",
+					type : "POST",
+					data : {
+						"time_day" : time_day,
+						"time_time" : time_time,
+						"worker_id":[[${session.user.id}]]
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/worker/appointment_time/" +[[${session.user.id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 挂号记录 -->
+	<div th:fragment="worker_appointment_manage">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">日期</th>
+					<th scope="col">时间</th>
+					<th scope="col">病人姓名</th>
+					<th scope="col">病人性别</th>
+					<th scope="col">病人生日</th>
+					<th scope="col">检查单</th>
+					<th scope="col">诊疗单</th>
+					<th scope="col">处方</th>
+				</tr>
+			</thead>
+			<tbody th:each="appointment_timeAppointmentList:${map}">
+				<tr
+					th:each="appointmentUserMap:${appointment_timeAppointmentList.value}">
+					<td th:text="${#strings.substring(appointment_timeAppointmentList.key.time_day,0,10)}"></td>
+					<td><span
+						th:if="${appointment_timeAppointmentList.key.time_time}">上午</span>
+						<span th:if="!${appointment_timeAppointmentList.key.time_time}">下午</span>
+					</td>
+					<td th:text="${appointmentUserMap.value.nickname}"></td>
+					<td><span th:if="${appointmentUserMap.value.gender}">男</span>
+						<span th:if="!${appointmentUserMap.value.gender}">女</span></td>
+					<td th:text="${#strings.substring(appointmentUserMap.value.birthday,0,10)}"></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'worker_check_list('+${appointmentUserMap.key.id}+')'">添加/查看</button></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'worker_diagnosis('+${appointmentUserMap.key.id}+')'">添加/查看</button></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'worker_prescription('+${appointmentUserMap.key.id}+')'">添加/查看</button></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var worker_check_list=function(id){
+				$("#display_div").load(
+						"/worker/check_list/" + id);
+			}
+			var worker_diagnosis=function(id){
+				$("#display_div").load(
+						"/worker/diagnosis/" + id);
+			}
+			var worker_prescription=function(id){
+				$("#display_div").load(
+						"/worker/prescription/" + id);
+			}
+		</script>
+	</div>
+	<!-- 添加/查看检查单 -->
+	<div th:fragment="worker_check_list">
+		<div th:if="${check_list}==null">
+			<select class="form-control" name="check_project_id"
+				id="check_project_id_id">
+				<option th:each="check_project:${check_projectList}"
+					th:value="${check_project.id}" th:text="${check_project.name}"></option>
+			</select> <input type="date" class="form-control" name="time_day"
+				id="check_list_time_day_id" placeholder="检查日期">
+			<button type="button" class="btn btn-primary"
+				onclick="check_list_insert()">添加检查单</button>
+			<script type="text/javascript" th:inline="javascript">
+			var check_list_insert=function(){
+				var check_project_id = $("#check_project_id_id").val().trim();
+				var time_day_string = $("#check_list_time_day_id")
+				.val().trim();
+				$.ajax({
+					url : "/check_lists",
+					type : "POST",
+					data:{
+						"check_project_id":check_project_id,
+						"time_day_string":time_day_string,
+						"appointment_id":[[${appointment_id}]]
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/worker/check_list/" + [[${appointment_id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+		</div>
+		<div th:if="${check_list}!=null">
+			<table class="table">
+				<thead>
+					<tr>
+						<th scope="col">约定检查日期</th>
+						<th scope="col">检查项目</th>
+						<th scope="col">病人姓名</th>
+						<th scope="col">病人性别</th>
+						<th scope="col">病人生日</th>
+						<th scope="col">实际检查时间</th>
+						<th scope="col">检查结果</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td th:text="${#strings.substring(check_list.time_day,0,10)}"></td>
+						<td th:text="${check_project.name}"></td>
+						<td th:text="${user.nickname}"></td>
+						<td th:text="${user.gender}"></td>
+						<td th:text="${#strings.substring(user.birthday,0,10)}"></td>
+						<td th:text="${check_list.time_real}"></td>
+						<td th:text="${check_list.result}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<!-- 添加/查看诊疗单 -->
+	<div th:fragment="worker_diagnosis">
+		<div th:if="${diagnosis}==null">
+			<select class="form-control" onchange="disease1Change()"
+				id="disease1_id">
+				<option th:each="disease:${diseaseList}" th:value="${disease.id}"
+					th:text="${disease.name}"></option>
+			</select>
+			<div id="worker_diagnosis_disease2"></div>
+			<input type="text" class="form-control" name="remark" id="remark_id"
+				placeholder="备注">
+			<button type="button" class="btn btn-primary"
+				onclick="post_diagnosis()">新增诊疗单</button>
+			<script type="text/javascript" th:inline="javascript">
+			var disease1Change = function() {
+				var parent_id = $("#disease1_id").children('option:selected')
+						.val();
+				$("#worker_diagnosis_disease2").load(
+						"/worker/diagnosis/disease2/"+parent_id);
+			}
+			disease1Change();
+			var post_diagnosis=function(){
+				var disease_id = $("#disease3_id").children('option:selected')
+				.val();
+				var remark=$("#remark_id").val().trim();
+				$.ajax({
+					url : "/diagnosiss",
+					type : "POST",
+					data : {
+						"disease_id" : disease_id,
+						"remark" : remark,
+						"appointment_id":[[${appointment_id}]]
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/worker/diagnosis/" + [[${appointment_id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			</script>
+		</div>
+		<div th:if="${diagnosis}!=null">
+			<table class="table">
+				<thead>
+					<tr>
+						<th scope="col">疾病名</th>
+						<th scope="col">病人姓名</th>
+						<th scope="col">病人性别</th>
+						<th scope="col">病人生日</th>
+						<th scope="col">诊疗结果</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td th:text="${diseaseName}"></td>
+						<td th:text="${user.nickname}"></td>
+						<td><span th:if="${user.gender}">男</span> <span
+							th:if="!${user.gender}">女</span></td>
+						<td th:text="${#strings.substring(user.birthday,0,10)}"></td>
+						<td th:text="${diagnosis.remark}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<!-- 添加/查看诊疗单补充1 -->
+	<div th:fragment="worker_diagnosis_disease2">
+		<select class="form-control" onchange="disease2Change()"
+			id="disease2_id">
+			<option th:each="disease:${diseaseList}" th:value="${disease.id}"
+				th:text="${disease.name}"></option>
+		</select>
+		<div id="worker_diagnosis_disease3"></div>
+		<script type="text/javascript">
+			var disease2Change = function() {
+				var parent_id = $("#disease2_id").children('option:selected')
+						.val();
+				$("#worker_diagnosis_disease3").load(
+						"/worker/diagnosis/disease3/"+parent_id);
+			}
+			disease2Change();
+		</script>
+	</div>
+	<!-- 添加/查看诊疗单补充2 -->
+	<div th:fragment="worker_diagnosis_disease3">
+		<select class="form-control" id="disease3_id">
+			<option th:each="disease:${diseaseList}" th:value="${disease.id}"
+				th:text="${disease.name}"></option>
+		</select>
+	</div>
+	<!-- 添加/查看处方 -->
+	<div th:fragment="worker_prescription">
+		<select class="form-control" id="drug_id">
+			<option th:each="drug:${drugList}" th:value="${drug.id}"
+				th:text="${drug.name}"></option>
+		</select> <input type="number" class="form-control" name="quantity"
+			id="quantity_id" placeholder="数量">
+		<button type="button" class="btn btn-primary"
+			onclick="post_prescription()">新增药物</button>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">药物名</th>
+					<th scope="col">单价</th>
+					<th scope="col">数量</th>
+					<th scope="col">总价</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="prescriptionDrug:${map}">
+					<td th:text="${prescriptionDrug.value.name}"></td>
+					<td th:text="${prescriptionDrug.value.price}"></td>
+					<td th:text="${prescriptionDrug.key.quantity}"></td>
+					<td
+						th:text="${#numbers.formatDecimal(prescriptionDrug.value.price*prescriptionDrug.key.quantity,0,2)}"></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript" th:inline="javascript">
+			var post_prescription=function(){
+				var drug_id=$("#drug_id").val().trim();
+				var quantity=$("#quantity_id").val().trim();
+				$.ajax({
+					url : "/prescriptions",
+					type : "POST",
+					data : {
+						"drug_id" : drug_id,
+						"quantity" : quantity,
+						"appointment_id":[[${appointment_id}]]
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/worker/prescription/" + [[${appointment_id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			</script>
+	</div>
+</body>
+</html>

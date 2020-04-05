@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<body>
+	<!-- 用户信息 -->
+	<div th:fragment="patient_information">
+		<div>
+			<span class="font-weight-bold">头像：</span> <img class="img-thumbnail"
+				th:src="'/image/'+${session.user.image}" width="200px"
+				height="200px" />
+		</div>
+		<div>
+			<span class="font-weight-bold"> 姓名：</span><span
+				th:text="${session.user.nickname}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">性别：</span> <span
+				th:if="${session.user.gender}">男</span> <span
+				th:if="!${session.user.gender}">女</span>
+		</div>
+		<div>
+			<span class="font-weight-bold">生日：</span> <span
+				th:text="${#strings.substring(session.user.birthday,0,10)}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">手机号码：</span> <span
+				th:text="${session.user.phone_number}"></span>
+		</div>
+		<button type="button" class="btn btn-primary"
+			onclick="user_information_edit()">修改个人信息</button>
+		<script type="text/javascript">
+			var user_information_edit = function() {
+				$("#display_div").load("/user/information/edit");
+			}
+		</script>
+	</div>
+	<!-- 进行挂号 -->
+	<div th:fragment="patient_appointment_time_select">
+		<div class="form-group">
+			<input type="date" class="form-control" name="time_day"
+				id="appointment_time_time_day_id" placeholder="挂号日期">
+		</div>
+		<div class="form-group">
+			<button type="button" class="btn btn-primary"
+				onclick="appointment_time_form()">查询挂号信息</button>
+		</div>
+		<div id="appointment_times_display_div"></div>
+		<script type="text/javascript" th:inline="javascript">
+			var appointment_time_form = function() {
+				var time_day = $("#appointment_time_time_day_id").val()
+						.trim();
+				$("#appointment_times_display_div").load(
+						"/patient/appointment_time/select/time_day?time_day="
+								+ time_day);
+			}
+		</script>
+	</div>
+	<!-- 显示目前可预约挂号信息 -->
+	<div th:fragment="patient_appointment_time_select_time_day">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">日期</th>
+					<th scope="col">时间</th>
+					<th scope="col">医生头像</th>
+					<th scope="col">医生姓名</th>
+					<th scope="col">操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="appointment_timeUser:${map}">
+					<td th:text="${#strings.substring(session.user.birthday,0,10)}"></td>
+					<td><span th:if="${appointment_timeUser.key.time_time}">上午</span>
+						<span th:if="!${appointment_timeUser.key.time_time}">下午</span></td>
+					<td><img
+						th:src="'/image/'+${appointment_timeUser.value.image}"
+						width="100px" height="100px" /></td>
+					<td th:text="${appointment_timeUser.value.nickname}"></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'new_appointment('+${session.user.id}+','+${appointment_timeUser.key.id}+')'">预约挂号</button></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript" th:inline="javascript">
+			var new_appointment = function(patient_id, appointment_time_id) {
+				console.log(patient_id);
+				console.log(appointment_time_id);
+				$.ajax({
+					url : "/appointments",
+					type : "POST",
+					dataType : "JSON",
+					data : {
+						"patient_id" : patient_id,
+						"appointment_time_id" : appointment_time_id
+					},
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/patient/appointment/select/"+[[${session.user.id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 挂号记录 -->
+	<div th:fragment="patient_appointment_select">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">挂号日期</th>
+					<th scope="col">挂号时间</th>
+					<th scope="col">医生头像</th>
+					<th scope="col">医生姓名</th>
+					<th scope="col">检查单</th>
+					<th scope="col">诊疗单</th>
+					<th scope="col">处方</th>
+				</tr>
+			</thead>
+			<tbody th:each="appointmentAppointment_timeUser:${map}">
+				<tr
+					th:each="appointment_timeUser:${appointmentAppointment_timeUser.value}">
+					<td
+						th:text="${#strings.substring(appointment_timeUser.key.time_day,0,10)}"></td>
+					<td><span th:if="${appointment_timeUser.key.time_time}">上午</span>
+						<span th:if="!${appointment_timeUser.key.time_time}">下午</span></td>
+					<td><img
+						th:src="'/image/'+${appointment_timeUser.value.image}"
+						width="100px" height="100px" /></td>
+					<td th:text="${appointment_timeUser.value.nickname}"></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'patient_appointment_check_list('+${appointmentAppointment_timeUser.key.id}+')'">检查单</button></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'patient_appointment_diagnosis('+${appointmentAppointment_timeUser.key.id}+')'">诊疗单</button></td>
+					<td><button type="button" class="btn btn-primary"
+							th:onclick="'patient_appointment_prescription('+${appointmentAppointment_timeUser.key.id}+')'">处方</button></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var patient_appointment_check_list=function(id){
+				$("#display_div").load(
+						"/patient/appointment/check_list/"+id);
+			}
+			var patient_appointment_diagnosis=function(id){
+				$("#display_div").load(
+						"/patient/appointment/diagnosis/"+id);
+			}
+			var patient_appointment_prescription=function(id){
+				$("#display_div").load(
+						"/patient/appointment/prescription/"+id);
+			}
+		</script>
+	</div>
+	<!-- 检查单 -->
+	<div th:fragment="patient_appointment_check_list">
+		<!-- 	<div th:text="${check_project.name}"></div>
+		<div th:text="${check_list.time_day}"></div>
+		<div th:text="${check_list.time_real}"></div>
+		<div th:text="${check_list.result}"></div> -->
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">检查项目名</th>
+					<th scope="col">约定检查日期</th>
+					<th scope="col">实际检查时间</th>
+					<th scope="col">检查结果</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td th:text="${check_project.name}"></td>
+					<td th:text="${#strings.substring(check_list.time_day,0,10)}"></td>
+					<td th:text="${#strings.substring(check_list.time_real,0,19)}"></td>
+					<td th:text="${check_list.result}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<!-- 诊疗单 -->
+	<div th:fragment="patient_appointment_diagnosis">
+		<div>
+			<span class="font-weight-bold">疾病类型：</span> <span
+				th:text="${disease_string}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">备注：</span> <span
+				th:text="${diagnosis.remark}"></span>
+		</div>
+	</div>
+	<!-- 处方单 -->
+	<div th:fragment="patient_appointment_prescription">
+		<!-- <div th:each="prescriptionDrug:${map}">
+			<div th:text="${prescriptionDrug.value.name}"></div>
+			<div th:text="${prescriptionDrug.key.quantity}"></div>
+		</div> -->
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">药物名</th>
+					<th scope="col">药物单价</th>
+					<th scope="col">药物数量</th>
+					<th scope="col">药物总价</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="prescriptionDrug:${map}">
+					<td th:text="${prescriptionDrug.value.name}"></td>
+					<td th:text="${prescriptionDrug.value.price}"></td>
+					<td th:text="${prescriptionDrug.key.quantity}"></td>
+					<td
+						th:text="${#numbers.formatDecimal(prescriptionDrug.value.price*prescriptionDrug.key.quantity,0,2)}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

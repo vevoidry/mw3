@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>主页</title>
+<!-- Bootstrap核心CSS -->
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<!-- JQuery -->
+<script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+<!-- bootstrap的js -->
+<script type="text/javascript" src="/js/popper.min.js"></script>
+<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+<!-- echarts的js -->
+<script type="text/javascript" src="/js/echarts.js"></script>
+</head>
+<body>
+	<!-- 顶部 -->
+	<div th:include="template/index_template::web_header"></div>
+	<!-- 数据 -->
+	<table class="table">
+		<thead>
+			<tr>
+				<th scope="col">检查项目</th>
+				<th scope="col">病人姓名</th>
+				<th scope="col">病人性别</th>
+				<th scope="col">日期</th>
+				<th scope="col">真正时间</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td th:text="${check_project.name}"></td>
+				<td th:text="${user.nickname}"></td>
+				<td th:text="${user.gender}"></td>
+				<td th:text="${#strings.substring(check_list.time_day,0,10)}"></td>
+				<td th:text="${check_list.time_real}"></td>
+			</tr>
+		</tbody>
+	</table>
+	<p th:text="${check_list.result}"></p>
+	<!-- 底部 -->
+	<div th:include="template/index_template::web_footer"></div>
+</body>

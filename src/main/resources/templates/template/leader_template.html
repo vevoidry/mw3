@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<body>
+	<!-- 用户信息 -->
+	<div th:fragment="leader_check_list">
+		<div class="form-group">
+			<textarea class="form-control" name="content" rows="10"
+				id="check_list_result_id" placeholder="检查结果"></textarea>
+		</div>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">检查项目</th>
+					<th scope="col">病人姓名</th>
+					<th scope="col">病人性别</th>
+					<th scope="col">约定检查日期</th>
+					<th scope="col">实际检查时间</th>
+					<th scope="col">操作</th>
+					<th scope="col">查看</th>
+				</tr>
+			</thead>
+			<tbody th:each="check_listUserCheck_projectMap:${map}">
+				<tr
+					th:each="userCheck_project:${check_listUserCheck_projectMap.value}">
+					<td th:text="${userCheck_project.value.name}"></td>
+					<td th:text="${userCheck_project.key.nickname}"></td>
+					<td><span th:if="${userCheck_project.key.gender}">男</span> <span
+						th:if="!${userCheck_project.key.gender}">女</span></td>
+					<td
+						th:text="${#strings.substring(check_listUserCheck_projectMap.key.time_day,0,10)}"></td>
+					<td th:text="${#strings.substring(check_listUserCheck_projectMap.key.time_real,0,19)}"></td>
+					<td><button
+							th:onclick="'check_list_result('+${check_listUserCheck_projectMap.key.id}+')'"
+							type="button" class="btn btn-primary">更新检查结果</button></td>
+					<td><a
+						th:href="'/check_lists/'+${check_listUserCheck_projectMap.key.id}">
+							<button type="button" class="btn btn-primary">查看检查结果</button>
+					</a></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript" th:inline="javascript">
+			var check_list_result = function(check_list_id) {
+				var result = $("#check_list_result_id").val();
+				$.ajax({
+					url : "/worker/check_list/update_result",
+					type : "get",
+					data : {
+						"check_list_id" : check_list_id,
+						"result" : result
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load(
+								"/worker/check_department/leader/"
+										+ [[${check_department_id}]]);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+</body>
+</html>

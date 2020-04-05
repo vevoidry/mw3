@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<body>
+	<!-- 顶部 -->
+	<div class="jumbotron" th:fragment="web_header">
+		<h1 class="text-center">
+			<a href="/">医疗资源网</a>
+		</h1>
+	</div>
+	<!-- 底部 -->
+	<div class="jumbotron jumbotron-fluid" th:fragment="web_footer">
+		<div class="container">
+			<h1 class="display-4">友情赞助</h1>
+			<p class="lead">
+				<a href="#">哔哩哔哩</a>
+			</p>
+			<p class="lead">
+				<a href="#">百度贴吧</a>
+			</p>
+		</div>
+	</div>
+	<!-- 登录/注册 -->
+	<div th:fragment="login_register">
+		<div class="row">
+			<div class="col-lg-4"></div>
+			<!-- 若用户未登录 -->
+			<div class="col-lg-4" th:if="${session.user}==null">
+				<!-- 控制按钮 -->
+				<div class="btn-group d-flex justify-content-center" role="group">
+					<button type="button" class="btn btn-secondary" onclick="login()">登录</button>
+					<button type="button" class="btn btn-secondary"
+						onclick="register()">注册</button>
+				</div>
+				<!-- 登录 -->
+				<div id="login">
+					<form action="/authentication/authenticate" method="post">
+						<input type="text" name="username" class="form-control"
+							placeholder="账号"> <input type="password" name="password"
+							class="form-control" placeholder="密码">
+						<button type="submit" class="form-control btn btn-info">登录</button>
+					</form>
+				</div>
+				<!-- 注册 -->
+				<div id="register">
+					<form action="/users" method="post">
+						<input type="text" name="username" class="form-control"
+							placeholder="账号 6-15位 由数字与大小写字母组成"> <input
+							type="password" name="password" class="form-control"
+							placeholder="密码 6-15位 由数字与大小写字母组成">
+						<button type="submit" class="form-control btn btn-info">注册</button>
+					</form>
+				</div>
+			</div>
+			<script type="text/javascript">
+				var login = function() {
+					/* 让所有元素的active状态失效 */
+					$("#loginLi").removeClass("active");
+					$("#registerLi").removeClass("active");
+					/* 让某个元素的active状态生效 */
+					$("#loginLi").addClass("active");
+					/* 让某些元素隐藏，某些元素取消隐藏 */
+					$("#login").show();
+					$("#register").hide();
+				}
+				var register = function() {
+					/* 让所有元素的active状态失效 */
+					$("#loginLi").removeClass("active");
+					$("#registerLi").removeClass("active");
+					/* 让某个元素的active状态生效 */
+					$("#registerLi").addClass("active");
+					/* 让某些元素隐藏，某些元素取消隐藏 */
+					$("#login").hide();
+					$("#register").show();
+				}
+				login();
+			</script>
+			<!-- 若用户已登录 -->
+			<div class="col-lg-4" th:if="${session.user}!=null">
+				<div>
+					<span class="font-weight-bold">头像：</span> <img
+						class="img-thumbnail" th:src="'/image/'+${session.user.image}"
+						width="200px" height="200px" />
+				</div>
+				<div>
+					<span class="font-weight-bold"> 姓名：</span><a
+						th:href="'/'+${session.user.role}"
+						th:text="${session.user.nickname}"></a>
+				</div>
+				<div>
+					<span class="font-weight-bold">性别：</span> <span
+						th:if="${session.user.gender}">男</span> <span
+						th:if="!${session.user.gender}">女</span>
+				</div>
+				<div>
+					<span class="font-weight-bold">生日：</span> <span
+						th:text="${#strings.substring(session.user.birthday,0,10)}"></span>
+				</div>
+				<div>
+					<span class="font-weight-bold">手机号码：</span> <span
+						th:text="${session.user.phone_number}"></span>
+				</div>
+				<div>
+					<a href="/authentication/logout"><button type="button"
+							class="btn btn-primary">退出</button></a>
+				</div>
+			</div>
+			<div class="col-lg-4"></div>
+		</div>
+	</div>
+	<!-- 科普 -->
+	<div th:fragment="popular_science">
+		<div class="row">
+			<div class="col-lg-3"></div>
+			<div class="col-lg-6">
+				<div th:each="article:${articleList}">
+					<a th:text="${article.title}" th:href="'/articles/'+${article.id}"></a>
+				</div>
+			</div>
+			<div class="col-lg-3"></div>
+		</div>
+	</div>
+	<!-- 公告 -->
+	<div th:fragment="public_notice">
+		<div class="row">
+			<div class="col-lg-3"></div>
+			<div class="col-lg-6">
+				<div th:each="article:${articleList}">
+					<a th:text="${article.title}" th:href="'/articles/'+${article.id}"></a>
+				</div>
+			</div>
+			<div class="col-lg-3"></div>
+		</div>
+	</div>
+	<!-- 报表 -->
+	<div th:fragment="report_form">
+		<form>
+			<div class="row">
+				<div class="col">
+					<input type="number" id="year_id" class="form-control"
+						placeholder="输入年份，如：2020">
+				</div>
+				<div class="col">
+					<input type="number" id="month_id" class="form-control"
+						placeholder="输入月份，如：5">
+				</div>
+			</div>
+		</form>
+
+		<button type="button" class="btn btn-primary" onclick="a()">药品总统计</button>
+		<button type="button" class="btn btn-primary" onclick="c()">药品年份统计</button>
+		<button type="button" class="btn btn-primary" onclick="d()">药品月份统计</button>
+		<button type="button" class="btn btn-primary" onclick="b()">疾病总统计</button>
+		<button type="button" class="btn btn-primary" onclick="e()">疾病年份统计</button>
+		<button type="button" class="btn btn-primary" onclick="f()">疾病月份统计</button>
+		<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+		<div id="main" style="width: 100%; height: 500px;"></div>
+		<script type="text/javascript">
+			//echarts画布
+			var myChart = echarts.init(document.getElementById('main'));
+			//药物统计图
+			var my_echart_drug=function(names,datas){
+				// 基于准备好的dom，初始化echarts实例
+				// 指定图表的配置项和数据
+				var option = {
+					title : {
+						text : '药品销量统计'
+					},
+					tooltip : {},
+					legend : {
+						data : [ '销量' ]
+					},
+					xAxis : {
+						data :  /* [ "衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子" ]  */names,
+						axisLabel: {interval:0,rotate:-40 }
+					},
+					yAxis : {},
+					series : [ {
+						name : '销量',
+						type : 'bar',
+						barWidth : 30,
+						data : /* [ 5, 20, 36, 10, 10, 20 ]  */datas
+					}]
+				};
+				// 使用刚指定的配置项和数据显示图表。
+				myChart.clear();
+				myChart.setOption(option);
+			}
+			//疾病统计图
+			var my_echart_disease=function(names,data1,data2,data3){
+				// 指定图表的配置项和数据
+				var option = {
+					title : {
+						text : '疾病统计数据'
+					},
+					tooltip : {},
+					legend : {
+						data : [ '总数','男','女' ]
+					},
+					xAxis : {
+						data :  /* [ "衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子" ]  */names,
+						axisLabel: {interval:0,rotate:-40 }
+					},
+					yAxis : {},
+					series : [ {
+						name : '总数',
+						type : 'bar',
+						barWidth : 30,
+						data : /* [ 5, 20, 36, 10, 10, 20 ]  */data1
+					},
+					{
+						name : '男',
+						type : 'bar',
+						barWidth : 30,
+						data : /* [ 5, 20, 36, 10, 10, 20 ]  */data2
+					} ,
+					{
+						name : '女',
+						type : 'bar',
+						barWidth : 30,
+						data : /* [ 5, 20, 36, 10, 10, 20 ]  */data3
+					} 
+					
+					]
+				};
+				// 使用刚指定的配置项和数据显示图表。
+				myChart.clear();
+				myChart.setOption(option);
+			}
+			var a=function(){
+				$.ajax({
+					url : "/index/statistics/drug",
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(list) {
+						var names=[];
+						var quantitys=[];
+						for ( var index in list){
+							names.push(list[index].drug_name);
+							quantitys.push(list[index].quantity);
+						}
+						my_echart_drug(names,quantitys);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var b=function(){
+				$.ajax({
+					url : "/index/statistics/disease",
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(map) {
+							var list1=map.list1;
+							var list2=map.list2;
+							var list3=map.list3;
+							var names=[];
+							var data1=[];
+							var data2=[];
+							var data3=[];
+							for ( var index in list1){
+								names.push(list1[index].disease_name);
+								data1.push(list1[index].quantity);
+							}
+							for ( var index in list2){
+								data2.push(list2[index].quantity);
+							}
+							for ( var index in list3){
+								data3.push(list3[index].quantity);
+							}
+							my_echart_disease(names,data1,data2,data3);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var c=function(){
+				var year=$("#year_id").val().trim();
+				if(year==""){
+					alert("年份不可为空");
+					return;;
+				}
+				$.ajax({
+					url : "/index/statistics/drug/year/"+year,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(list) {
+						var names=[];
+						var quantitys=[];
+						for ( var index in list){
+							names.push(list[index].drug_name);
+							quantitys.push(list[index].quantity);
+						}
+						my_echart_drug(names,quantitys);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var d=function(){
+				var year=$("#year_id").val().trim();
+				var month=$("#month_id").val().trim();
+				if(year==""){
+					alert("年份不可为空");
+					return;
+				}
+				if(month==""){
+					alert("月份不可为空");
+					return;
+				}
+				$.ajax({
+					url : "/index/statistics/drug/year/"+year+"/month/"+month,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(list) {
+						var names=[];
+						var quantitys=[];
+						for ( var index in list){
+							names.push(list[index].drug_name);
+							quantitys.push(list[index].quantity);
+						}
+						my_echart_drug(names,quantitys);
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var e=function(){
+				var year=$("#year_id").val().trim();
+				if(year==""){
+					alert("年份不可为空");
+					return;;
+				}
+				$.ajax({
+					url : "/index/statistics/disease/year/"+year,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(map) {
+						var list1=map.list1;
+						var list2=map.list2;
+						var list3=map.list3;
+						var names=[];
+						var data1=[];
+						var data2=[];
+						var data3=[];
+						for ( var index in list1){
+							names.push(list1[index].disease_name);
+							data1.push(list1[index].quantity);
+						}
+						for ( var index in list2){
+							data2.push(list2[index].quantity);
+						}
+						for ( var index in list3){
+							data3.push(list3[index].quantity);
+						}
+						my_echart_disease(names,data1,data2,data3);
+				},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var f=function(){
+				var year=$("#year_id").val().trim();
+				var month=$("#month_id").val().trim();
+				if(year==""){
+					alert("年份不可为空");
+					return;
+				}
+				if(month==""){
+					alert("月份不可为空");
+					return;
+				}
+				$.ajax({
+					url : "/index/statistics/disease/year/"+year+"/month/"+month,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(map) {
+						var list1=map.list1;
+						var list2=map.list2;
+						var list3=map.list3;
+						var names=[];
+						var data1=[];
+						var data2=[];
+						var data3=[];
+						for ( var index in list1){
+							names.push(list1[index].disease_name);
+							data1.push(list1[index].quantity);
+						}
+						for ( var index in list2){
+							data2.push(list2[index].quantity);
+						}
+						for ( var index in list3){
+							data3.push(list3[index].quantity);
+						}
+						my_echart_disease(names,data1,data2,data3);
+				},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+
+	<!-- 修改个人信息 -->
+	<div th:fragment="user_information_edit">
+		<form action="/users/change" method="post"
+			enctype="multipart/form-data" id="user_information_edit_id">
+			<input type="text" th:value="${session.user.id}" name="id" hidden />
+			<div>
+				<span class="font-weight-bold">头像：</span> <img
+					th:src="'/image/'+${session.user.image}" width="200px"
+					height="200px" /> <input type="file" name="file_name"
+					class="form-control" />
+			</div>
+			<div class="form-group">
+				<span class="font-weight-bold">生日：</span><span
+					th:text="${#strings.substring(session.user.birthday,0,10)}"></span>
+				<input type="date" class="form-control" name="birthday_string"
+					placeholder="生日">
+			</div>
+			<div>
+				<span class="font-weight-bold">姓名：</span><input type="text"
+					name="nickname" th:value="${session.user.nickname}" />
+			</div>
+			<div>
+				<span class="font-weight-bold">手机号码：<input type="number"
+					name="phone_number" th:value="${session.user.phone_number}" /></span>
+			</div>
+			<div th:if="${session.user.gender}">
+				<span class="font-weight-bold">性别：</span>男<input type="radio"
+					name="gender" value="true" checked="checked" />女<input
+					type="radio" name="gender" value="false" />
+			</div>
+			<div th:if="!${session.user.gender}">
+				<span class="font-weight-bold">性别：</span>男<input type="radio"
+					name="gender" value="true" />女<input type="radio" name="gender"
+					value="false" checked="checked" />
+			</div>
+			<div>
+				<button type="button" class="btn btn-primary"
+					onclick="user_information_change()">保存修改</button>
+			</div>
+		</form>
+		<script type="text/javascript" th:inline="javascript">
+			var user_information_change = function() {
+				$.ajax({
+					url : "/users/change",
+					type : "POST",
+					cache : false,
+					data : new FormData($("#user_information_edit_id")[0]),
+					dataType : "JSON",
+					async : false,
+					contentType : false,
+					processData : false,
+					success : function(result) {
+						if([[${session.user.role}]]=="admin"){
+							window.location.href="/admin";
+						}else if([[${session.user.role}]]=="worker"){
+							window.location.href="/worker";							
+						}else{
+							window.location.href="/patient";
+						}
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+</body>
+</html>

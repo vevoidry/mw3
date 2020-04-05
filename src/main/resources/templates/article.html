@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>主页</title>
+<!-- Bootstrap核心CSS -->
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<!-- JQuery -->
+<script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+<!-- bootstrap的js -->
+<script type="text/javascript" src="/js/popper.min.js"></script>
+<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+<!-- echarts的js -->
+<script type="text/javascript" src="/js/echarts.js"></script>
+</head>
+<body>
+	<!-- 顶部 -->
+	<div th:include="template/index_template::web_header"></div>
+	<!-- 分类 -->
+	<div class="row">
+		<div class="col-lg-2"></div>
+		<div class="col-lg-8">
+			<h2 th:if="${article.category}==0">未分类</h2>
+			<h2 th:if="${article.category}==1">科普</h2>
+			<h2 th:if="${article.category}==2">公告</h2>
+			<!-- 标题 -->
+			<h3 class="text-center" th:text="${article.title}"></h3>
+			<!-- 时间 -->
+			<h5 class="text-center" th:text="${#strings.substring(article.create_time,0,19)}"></h5>
+			<!-- 内容 -->
+			<p th:text="${article.content}"></p>
+		</div>
+		<div class="col-lg-2"></div>
+	</div>
+	<!-- 底部 -->
+	<div th:include="template/index_template::web_footer"></div>
+</body>

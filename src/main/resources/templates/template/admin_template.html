@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<body>
+	<!-- 管理员信息 -->
+	<div th:fragment="admin_information">
+		<div>
+			<span class="font-weight-bold">头像：</span> <img class="img-thumbnail"
+				th:src="'/image/'+${session.user.image}" width="200px"
+				height="200px" />
+		</div>
+		<div>
+			<span class="font-weight-bold"> 姓名：</span><span
+				th:text="${session.user.nickname}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">性别：</span> <span
+				th:if="${session.user.gender}">男</span> <span
+				th:if="!${session.user.gender}">女</span>
+		</div>
+		<div>
+			<span class="font-weight-bold">生日：</span> <span
+				th:text="${#strings.substring(session.user.birthday,0,10)}"></span>
+		</div>
+		<div>
+			<span class="font-weight-bold">手机号码：</span> <span
+				th:text="${session.user.phone_number}"></span>
+		</div>
+		<button type="button" class="btn btn-primary"
+			onclick="user_information_edit()">修改个人信息</button>
+		<script type="text/javascript">
+			var user_information_edit = function() {
+				$("#display_div").load("/user/information/edit");
+			}
+		</script>
+	</div>
+	<!-- 病人信息 -->
+	<div th:fragment="admin_patient">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">头像</th>
+					<th scope="col">用户名</th>
+					<th scope="col">姓名</th>
+					<th scope="col">性别</th>
+					<th scope="col">生日</th>
+					<th scope="col">电话号码</th>
+					<th scope="col">操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="user:${userList}">
+					<td><img th:src="'/image/'+${user.image}" height="100px"
+						width="100px" /></td>
+					<td th:text="${user.username}"></td>
+					<td th:text="${user.nickname}"></td>
+					<td><span th:if="${user.gender}">男</span> <span
+						th:if="!${user.gender}">女</span></td>
+					<td th:text="${#strings.substring(user.birthday,0,10)}"></td>
+					<td th:text="${user.phone_number}"></td>
+					<td><select class="form-control"
+						id="admin_patient_department_id_id">
+							<option th:each="disease:${diseaseList}" th:value="${disease.id}"
+								th:text="${disease.name}"></option>
+					</select>
+						<button th:onclick="'updateRoleById('+${user.id}+')'"
+							type="button" class="btn btn-primary">设为工作人员</button></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var updateRoleById = function(id) {
+				var department_id = $("#admin_patient_department_id_id").val();
+				$.ajax({
+					url : "/admin/role_to_worker/" + id,
+					type : "POST",
+					data : {
+						"department_id" : department_id
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/patient");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 医护人员信息 -->
+	<div th:fragment="admin_worker">
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">头像</th>
+					<th scope="col">用户名</th>
+					<th scope="col">姓名</th>
+					<th scope="col">性别</th>
+					<th scope="col">生日</th>
+					<th scope="col">电话号码</th>
+					<th scope="col">入职日期</th>
+					<th scope="col">科室</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="userName:${userNameMap}">
+					<td><img th:src="'/image/'+${userName.key.image}"
+						height="100px" width="100px" /></td>
+					<td th:text="${userName.key.username}"></td>
+					<td th:text="${userName.key.nickname}"></td>
+					<td><span th:if="${userName.key.gender}">男</span> <span
+						th:if="!${userName.key.gender}">女</span></td>
+					<td th:text="${#strings.substring(userName.key.birthday,0,10)}"></td>
+					<td th:text="${userName.key.phone_number}"></td>
+					<td th:text="${#strings.substring(userName.key.hiredate,0,10)}"></td>
+					<td th:text="${userName.value}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<!-- 文章管理 -->
+	<div th:fragment="admin_article_manage">
+		<div class="form-group">
+			<input type="text" class="form-control" name="title"
+				id="article_title_id" placeholder="文章标题">
+		</div>
+		<div class="form-group">
+			<textarea class="form-control" name="content" rows="10"
+				id="article_content_id" placeholder="文章内容"></textarea>
+		</div>
+		<div class="form-group">
+			<button type="button" class="btn btn-primary"
+				onclick="article_post()">新增文章</button>
+		</div>
+		<div class="row">
+			<!-- 无分类文章 -->
+			<div class="col-lg-4">
+				<h3>未分类文章</h3>
+				<div th:each="article:${articleList1}">
+					<h5>
+						<button th:onclick="'article_category('+${article.id}+',1)'"
+							type="button" class="btn btn-primary">设为科普</button>
+						<button th:onclick="'article_category('+${article.id}+',2)'"
+							type="button" class="btn btn-primary">设为公告</button>
+						<button th:onclick="'article_delete('+${article.id}+')'"
+							type="button" class="btn btn-danger">删除</button>
+						<a th:href="'/articles/'+${article.id}" th:text="${article.title}"></a>
+					</h5>
+				</div>
+			</div>
+			<!-- 科普文章 -->
+			<div class="col-lg-4">
+				<h3>科普文章</h3>
+				<div th:each="article:${articleList2}">
+					<h5>
+						<button th:onclick="'article_category('+${article.id}+',0)'"
+							type="button" class="btn btn-primary">设为未分类</button>
+						<a th:href="'/articles/'+${article.id}" th:text="${article.title}"></a>
+					</h5>
+				</div>
+			</div>
+			<!-- 公告文章 -->
+			<div class="col-lg-4">
+				<h3>公告文章</h3>
+				<div th:each="article:${articleList3}">
+					<h5>
+						<button th:onclick="'article_category('+${article.id}+',0)'"
+							type="button" class="btn btn-primary">设为未分类</button>
+						<a th:href="'/articles/'+${article.id}" th:text="${article.title}"></a>
+					</h5>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			var article_post = function() {
+				var title = $("#article_title_id").val();
+				var content = $("#article_content_id").val();
+				$.ajax({
+					url : "/articles",
+					type : "POST",
+					data : {
+						"title" : title,
+						"content" : content
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/article_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var article_category = function(id, category) {
+				$.ajax({
+					url : "/articles/" + id + "/category/" + category,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/article_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+			var article_delete = function(id) {
+				$.ajax({
+					url : "/articles/delete/" + id,
+					type : "get",
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/article_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 检查科室管理 -->
+	<div th:fragment="admin_check_department_manage">
+		<div class="form-group">
+			<input type="text" class="form-control" name="name"
+				id="check_department_name_id" placeholder="检查科室名">
+		</div>
+		<div class="form-group">
+			<button type="button" class="btn btn-primary"
+				onclick="post_check_department()">新增检查科室</button>
+		</div>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">科室名</th>
+					<th scope="col">科室长名</th>
+					<th scope="col">设置科室长</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="check_departmentUser:${map}">
+					<td th:text="${check_departmentUser.key.name}"></td>
+					<td th:text="${check_departmentUser.value.nickname}"></td>
+					<td><select class="form-control"
+						th:id="'admin_worker_id_'+${check_departmentUser.key.id}">
+							<option th:each="user:${userList}" th:value="${user.id}"
+								th:text="${user.username}"></option>
+					</select>
+						<button type="button" class="btn btn-primary"
+							th:onclick="'set_check_department_leader('+${check_departmentUser.key.id}+')'">设为科室长</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var set_check_department_leader = function(check_department_id) {
+				var worker_id = $("#admin_worker_id_" + check_department_id)
+						.val();
+				$.ajax({
+					url : "/admin/check_department/leader",
+					type : "get",
+					data : {
+						"worker_id" : worker_id,
+						"check_department_id" : check_department_id
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div")
+								.load("/admin/check_department_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+
+			var post_check_department = function() {
+				var name = $("#check_department_name_id").val().trim();
+				$.ajax({
+					url : "/check_departments",
+					type : "POST",
+					data : {
+						"name" : name
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div")
+								.load("/admin/check_department_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 检查项目管理 -->
+	<div th:fragment="admin_check_project_manage">
+		<select class="form-control" name="check_department_id"
+			id="check_project_check_department_id_id">
+			<option th:each="check_departmentCheck_projectList:${map}"
+				th:value="${check_departmentCheck_projectList.key.id}"
+				th:text="${check_departmentCheck_projectList.key.name}"></option>
+		</select> <input type="text" name="name" id="check_project_name_id"
+			class="form-control" placeholder="检查项目名">
+		<button type="button" class="btn btn-primary"
+			onclick="post_check_department()">添加检查项目</button>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">检查科室名</th>
+					<th scope="col">检查项目名</th>
+				</tr>
+			</thead>
+			<tbody th:each="check_departmentCheck_projectList:${map}">
+				<tr
+					th:each="check_project:${check_departmentCheck_projectList.value}">
+					<td th:text="${check_departmentCheck_projectList.key.name}"></td>
+					<td th:text="${check_project.name}"></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var post_check_department = function() {
+				var check_department_id = $(
+						"#check_project_check_department_id_id").val().trim();
+				var name = $("#check_project_name_id").val().trim();
+				$.ajax({
+					url : "/check_projects",
+					type : "POST",
+					data : {
+						"check_department_id" : check_department_id,
+						"name" : name
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/check_project_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 药品管理 -->
+	<div th:fragment="admin_drug_manage">
+		<script type="text/javascript">
+			var drug_form = function() {
+				var supplier_number = $("#drug_form_supplier_number_id").val()
+						.trim();
+				var name = $("#drug_form_name_id").val().trim();
+				var specification = $("#drug_form_specification_id").val()
+						.trim();
+				var unit = $("#drug_form_unit_id").val().trim();
+				var price = $("#drug_form_price_id").val().trim();
+				var quantity = $("#drug_form_quantity_id").val().trim();
+				var start_time_string = $("#drug_form_start_time_string_id")
+						.val().trim();
+				var validity_time = $("#drug_form_validity_time_id").val()
+						.trim();
+				var is_prescription = $(
+						"input:radio[name=is_prescription]:checked").val()
+						.trim();
+				$.ajax({
+					url : "/drugs",
+					type : "POST",
+					data : {
+						"supplier_number" : supplier_number,
+						"name" : name,
+						"specification" : specification,
+						"unit" : unit,
+						"price" : price,
+						"quantity" : quantity,
+						"start_time_string" : start_time_string,
+						"validity_time" : validity_time,
+						"is_prescription" : is_prescription
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/drug_manage");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+		<form action="/drugs" method="post">
+			<div class="form-group">
+				<input type="text" class="form-control" name="supplier_number"
+					id="drug_form_supplier_number_id" placeholder="供应商编号">
+			</div>
+			<div class="form-group">
+				<input type="text" class="form-control" name="name"
+					id="drug_form_name_id" placeholder="药物名">
+			</div>
+			<div class="form-group">
+				<input type="text" class="form-control" name="specification"
+					id="drug_form_specification_id" placeholder="规格">
+			</div>
+			<div class="form-group">
+				<input type="text" class="form-control" name="unit"
+					id="drug_form_unit_id" placeholder="单位">
+			</div>
+			<div class="form-group">
+				<input type="number" class="form-control" name="price"
+					id="drug_form_price_id" placeholder="单价">
+			</div>
+			<div class="form-group">
+				<input type="number" class="form-control" name="quantity"
+					id="drug_form_quantity_id" placeholder="库存">
+			</div>
+			<div class="form-group">
+				<input type="date" class="form-control" name="start_time_string"
+					id="drug_form_start_time_string_id" placeholder="生产日期">
+			</div>
+			<div class="form-group">
+				<input type="number" class="form-control" name="validity_time"
+					id="drug_form_validity_time_id" placeholder="有效期（单位为月）">
+			</div>
+			<div class="form-group">
+				<div class="form-check form-check-inline">是否处方药品：</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="is_prescription"
+						value="true" checked>是
+				</div>
+				<div class="form-check form-check-inline">
+					<input class="form-check-input" type="radio" name="is_prescription"
+						value="false"> 否
+				</div>
+			</div>
+			<div class="form-group">
+				<button type="button" class="btn btn-primary" onclick="drug_form()">新增药品</button>
+			</div>
+		</form>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">药物名</th>
+					<th scope="col">供应商编号</th>
+					<th scope="col">规格</th>
+					<th scope="col">单位</th>
+					<th scope="col">单价</th>
+					<th scope="col">库存</th>
+					<th scope="col">生产日期</th>
+					<th scope="col">有效期，单位为月</th>
+					<th scope="col">是否处方药</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="drug:${drugList}">
+					<td th:text="${drug.name}"></td>
+					<td th:text="${drug.supplier_number}"></td>
+					<td th:text="${drug.specification}"></td>
+					<td th:text="${drug.unit}"></td>
+					<td th:text="${drug.price}"></td>
+					<td th:text="${drug.quantity}"></td>
+					<td th:text="${#strings.substring(drug.start_time,0,10)}"></td>
+					<td th:text="${drug.validity_time}"></td>
+					<td><span th:if="${drug.is_prescription}">是</span> <span
+						th:if="!${drug.is_prescription}">否</span></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<!-- 初级分类管理 -->
+	<div th:fragment="admin_disease_manage1">
+		<div class="form-group">
+			<input type="text" class="form-control" name="name"
+				id="disease1_name_id" placeholder="初级分类名">
+		</div>
+		<div class="form-group">
+			<button type="button" class="btn btn-primary"
+				onclick="post_disease1()">新增初级分类</button>
+		</div>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">初级分类名</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="disease:${diseaseList}">
+					<td th:text="${disease.name}"></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var post_disease1 = function() {
+				var name = $("#disease1_name_id").val().trim();
+				$.ajax({
+					url : "/diseases",
+					type : "POST",
+					data : {
+						"name" : name,
+						"parent_id" : 0,
+						"rank" : 1
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/disease_manage/1");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 二级分类管理 -->
+	<div th:fragment="admin_disease_manage2">
+		<select class="form-control" name="parent_id"
+			id="disease2_parent_id_id">
+			<option th:each="diseaseDiseaseList:${map}"
+				th:value="${diseaseDiseaseList.key.id}"
+				th:text="${diseaseDiseaseList.key.name}"></option>
+		</select> <input type="text" name="name" id="disease2_name_id"
+			class="form-control" placeholder="二级分类名">
+		<button type="button" class="btn btn-primary"
+			onclick="post_disease2()">添加二级分类</button>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">初级分类名</th>
+					<th scope="col">二级分类名</th>
+				</tr>
+			</thead>
+			<tbody th:each="diseaseDiseaseList:${map}">
+				<tr th:each="disease:${diseaseDiseaseList.value}">
+					<td th:text="${diseaseDiseaseList.key.name}"></td>
+					<td th:text="${disease.name}"></td>
+				</tr>
+			</tbody>
+		</table>
+		<script type="text/javascript">
+			var post_disease2 = function() {
+				var name = $("#disease2_name_id").val().trim();
+				var parent_id = $("#disease2_parent_id_id").val().trim();
+				$.ajax({
+					url : "/diseases",
+					type : "POST",
+					data : {
+						"name" : name,
+						"parent_id" : parent_id,
+						"rank" : 2
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/disease_manage/2");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 疾病管理 -->
+	<div th:fragment="admin_disease_manage3">
+		<select class="form-control" onchange="disease1Change()"
+			id="disease1_id">
+			<option th:each="map1:${map}" th:value="${map1.key.id}"
+				th:text="${map1.key.name}"></option>
+		</select>
+		<div id="disease2_display_div"></div>
+		<input type="text" name="name" id="disease3_name_id"
+			class="form-control" placeholder="疾病名">
+		<button type="button" class="btn btn-primary"
+			onclick="post_disease3()">添加疾病</button>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col">初级分类名</th>
+					<th scope="col">二级分类名</th>
+					<th scope="col">疾病名</th>
+				</tr>
+			</thead>
+			<div th:each="diseaseMap1:${map}">
+				<tbody th:each="diseaseMap2:${diseaseMap1.value}">
+					<tr th:each="disease:${diseaseMap2.value}">
+						<td th:text="${diseaseMap1.key.name}"></td>
+						<td th:text="${diseaseMap2.key.name}"></td>
+						<td th:text="${disease.name}"></td>
+					</tr>
+				</tbody>
+			</div>
+		</table>
+		<script type="text/javascript">
+			var disease1Change = function() {
+				var parent_id = $("#disease1_id").children('option:selected')
+						.val();
+				$("#disease2_display_div").load(
+						"/admin/disease_manage/api/" + parent_id);
+			}
+			disease1Change();
+			var post_disease3 = function() {
+				var name = $("#disease3_name_id").val().trim();
+				var parent_id = $("#disease2_id").val().trim();
+				$.ajax({
+					url : "/diseases",
+					type : "POST",
+					data : {
+						"name" : name,
+						"parent_id" : parent_id,
+						"rank" : 3
+					},
+					dataType : "JSON",
+					async : false,
+					success : function(result) {
+						$("#display_div").load("/admin/disease_manage/3");
+					},
+					error : function(err) {
+						alert(err.responseJSON.message);
+					}
+				});
+			}
+		</script>
+	</div>
+	<!-- 疾病管理补充 -->
+	<div th:fragment="admin_disease_manage_api">
+		<select class="form-control" name="parent_id" id="disease2_id">
+			<option th:each="disease:${diseaseList}" th:value="${disease.id}"
+				th:text="${disease.name}"></option>
+		</select>
+	</div>
+</body>
+</html>
